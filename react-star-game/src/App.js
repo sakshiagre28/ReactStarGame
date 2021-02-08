@@ -12,22 +12,90 @@ const StarDisplay = props =>{
 
 const NumberButton =props=>{
   return(
-  <button className ="number" onClick ={()=>{console.log(props.number)}}>{props.number}</button>
+  <button className ="number" 
+  style ={{backgroundColor : colors[props.status]}}
+  onClick ={()=>props.onClick(props.number,props.status)}>
+    {props.number}
+  </button>
 
   )}
+
+  const PlayAgain = props =>
+  {
+    return(
+      <div className = "game-done">
+        <button onClick = {props.onClick}>Play Again</button>
+      </div>
+    )
+  }
 const  App =()=> {
-  //const [stars, setStars] = useState(utils.random(1,9)); 
-  const stars = utils.random(1,9);
+  const [stars, setStars] = useState(utils.random(1,9)); 
+  //const stars = utils.random(1,9);
+  const [availableNums, setAvailableNums] = useState(utils.range(1,9));
+  const [candidateNums, setCandidateNums] = useState([])
+  
+  const candidatesAreWrong = utils.sum(candidateNums)>stars
+  const gameIsDone = availableNums.length ===0
+
+  const resetGame = () =>{
+    setStars(utils.random(1,9))
+    setAvailableNums(utils.range(1,9))
+    setCandidateNums([])
+  }
+
+  const numberStatus =(number)=>{
+    if(!availableNums.includes(number)){
+      return 'used';
+    }
+    if(candidateNums.includes(number))
+    {return candidatesAreWrong ? 'wrong' : 'candidate'
+    }
+
+    return 'available'
+  }
+
+  const onNumberClick = (number, currentStatus)=>
+  {
+    //currentstatus => new status
+    if(currentStatus == 'used')
+    {
+      return;
+    }
+    //candidate nums
+    const newCandidateNums = currentStatus==='available' ? candidateNums.concat(number): candidateNums.filter(cn => cn!==number);
+    if(utils.sum(newCandidateNums)!== stars)
+    {
+      setCandidateNums(newCandidateNums);
+    }
+    else{
+      const newAvailableNums = availableNums.filter(
+        n=> !newCandidateNums.includes(n)
+      )
+      //redraw numbers 
+      setStars(utils.randomSumIn(newAvailableNums,9))
+      setAvailableNums(newAvailableNums)
+      setCandidateNums([])
+    }
+    
+  }
   return (
     <div className = "game">
       <div>Pick 1 or more numbers</div>
       <div className= "body">
         <div className ="left">
-          <StarDisplay countOfStar ={stars}></StarDisplay>
+          {gameIsDone? (
+            <PlayAgain onClick= {resetGame}/>
+          ):
+          (<StarDisplay countOfStar ={stars}></StarDisplay>)}
         </div>
 
         <div className ="right">
-          {utils.range(1,9).map(number =><NumberButton key={number} number ={number}></NumberButton>)}
+          {utils.range(1,9).map(number =>
+          <NumberButton key={number} 
+                        number ={number}
+                        status = {numberStatus(number)}
+                        onClick = {onNumberClick}>  
+          </NumberButton>)}
         </div>
       </div>
       <div className ="timer" >Time remaining :10</div>
@@ -38,9 +106,9 @@ const  App =()=> {
 // Color Theme
 const colors = {
   available: 'lightgray',
-  used: 'lightgreen',
-  wrong: 'lightcoral',
-  candidate: 'deepskyblue',
+  used: 'green',
+  wrong: 'red',
+  candidate: 'blue',
 };
 
 // Math science
